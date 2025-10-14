@@ -70,9 +70,9 @@
     .mobile-menu a{display:block;padding:10px 0;color:#fff;font-weight:600;font-family:var(--font-secondary)}
     main{padding-top:80px}
     .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;background:linear-gradient(180deg,#050505 0%,#111 60%,#050505 100%);overflow:hidden;text-align:center;color:#fff}
-    .hero-grid{position:absolute;inset:-10%;display:grid;grid-template-columns:repeat(40,1fr);grid-template-rows:repeat(40,1fr);transform:skewY(12deg);opacity:.32;pointer-events:none;z-index:0}
-    .hero-grid-cell{border:.5px solid rgba(255,255,255,0.05);background:transparent;animation:fillCell 4s forwards steps(1,end)}
-    @keyframes fillCell{from{background:transparent}to{background:rgba(220,23,62,0.55)}}
+    .hero-grid{position:absolute;inset:-10%;display:grid;grid-template-columns:repeat(40,1fr);grid-template-rows:repeat(40,1fr);transform:skewY(12deg);pointer-events:none;z-index:0}
+    .hero-grid-cell{border:.5px solid rgba(255,255,255,0.08);background:transparent;transition:none}
+    .hero-grid-cell.is-active{background:var(--brand-red)}
     .hero .badge{display:inline-block;border:2px solid var(--brand-red);padding:8px 18px;margin-bottom:24px;color:var(--brand-gray);letter-spacing:.2em;font-size:12px;text-transform:uppercase;font-weight:700;font-family:var(--font-secondary);background:#fff;border-radius:999px}
     .hero h1{font-size:clamp(40px,6vw,72px);margin:0 0 12px;font-weight:800}
     .hero .tagline{font-size:clamp(20px,3.2vw,32px);color:var(--brand-red);font-style:italic;margin:0 0 18px}
@@ -837,23 +837,99 @@
     document.getElementById('year').textContent = new Date().getFullYear();
 
     function initHeroGrid(){
-      const grid = document.querySelector('.hero-grid');
+      const hero = document.querySelector('.hero');
+      if(!hero){
+        return;
+      }
+      const grid = hero.querySelector('.hero-grid');
       if(!grid){
         return;
       }
       const columns = 40;
       const rows = 40;
       const fragment = document.createDocumentFragment();
-      for(let index = 0; index < columns * rows; index++){
-        const cell = document.createElement('span');
-        cell.className = 'hero-grid-cell';
-        const column = index % columns;
-        const row = Math.floor(index / columns);
-        const delay = column * 0.05 + row * 0.03;
-        cell.style.animationDelay = `${delay}s`;
-        fragment.appendChild(cell);
+      const cells = [];
+      for(let row = 0; row < rows; row++){
+        for(let col = 0; col < columns; col++){
+          const cell = document.createElement('span');
+          cell.className = 'hero-grid-cell';
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          fragment.appendChild(cell);
+          cells.push(cell);
+        }
       }
       grid.appendChild(fragment);
+
+      const activeTimeouts = new Map();
+      let lastPoint = null;
+
+      function scheduleClear(cell){
+        const existing = activeTimeouts.get(cell);
+        if(existing){
+          clearTimeout(existing);
+        }
+        const timeout = setTimeout(function(){
+          cell.classList.remove('is-active');
+          activeTimeouts.delete(cell);
+        }, 1200);
+        activeTimeouts.set(cell, timeout);
+      }
+
+      function activateCell(row, col){
+        if(row < 0 || row >= rows || col < 0 || col >= columns){
+          return;
+        }
+        const index = row * columns + col;
+        const cell = cells[index];
+        if(!cell){
+          return;
+        }
+        cell.classList.add('is-active');
+        scheduleClear(cell);
+      }
+
+      function drawLine(fromRow, fromCol, toRow, toCol){
+        const deltaRow = toRow - fromRow;
+        const deltaCol = toCol - fromCol;
+        const steps = Math.max(Math.abs(deltaRow), Math.abs(deltaCol));
+        if(steps === 0){
+          activateCell(fromRow, fromCol);
+          return;
+        }
+        for(let step = 0; step <= steps; step++){
+          const row = Math.round(fromRow + (deltaRow * step) / steps);
+          const col = Math.round(fromCol + (deltaCol * step) / steps);
+          activateCell(row, col);
+        }
+      }
+
+      function handlePointer(event){
+        const rect = hero.getBoundingClientRect();
+        const relativeX = event.clientX - rect.left;
+        const relativeY = event.clientY - rect.top;
+        const col = Math.floor((relativeX / rect.width) * columns);
+        const row = Math.floor((relativeY / rect.height) * rows);
+        if(row < 0 || row >= rows || col < 0 || col >= columns){
+          return;
+        }
+        if(lastPoint && lastPoint.row === row && lastPoint.col === col){
+          return;
+        }
+        if(lastPoint){
+          drawLine(lastPoint.row, lastPoint.col, row, col);
+        } else {
+          activateCell(row, col);
+        }
+        lastPoint = {row, col};
+      }
+
+      hero.addEventListener('pointermove', handlePointer);
+      hero.addEventListener('pointerdown', handlePointer);
+      hero.addEventListener('pointerenter', handlePointer);
+      hero.addEventListener('pointerleave', function(){
+        lastPoint = null;
+      });
     }
 
     const form = document.getElementById('contactForm');
