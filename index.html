@@ -47,7 +47,6 @@
     body.page-loaded [data-animate].delay-2{animation-delay:.4s}
     body.page-loaded [data-animate].delay-3{animation-delay:.6s}
     body.page-loaded [data-animate].delay-4{animation-delay:.8s}
-    @keyframes digit-scroll{to{transform:translateY(calc(-1 * var(--end, 0) * 100%));}}
     .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border:none;border-radius:999px;cursor:pointer;background:var(--brand-red);color:#fff;transition:.25s;font-family:var(--font-secondary)}
     .btn:hover{filter:saturate(1.1);opacity:.92}
     .site-header{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--brand-gray);color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.25)}
@@ -102,12 +101,11 @@
     .impact-card{background:rgba(148,155,164,0.14);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;backdrop-filter:blur(6px);box-shadow:0 20px 45px rgba(0,0,0,0.35)}
     .impact-card .impact-number{display:flex;align-items:baseline;justify-content:center;gap:6px;font-size:38px;color:#fff;margin:0;font-family:var(--font-secondary);letter-spacing:.04em;line-height:1}
     .impact-number-digits{display:flex;gap:6px;align-items:flex-start}
-    .digit-column{position:relative;width:.75em;height:1.05em;overflow:hidden;display:inline-flex;justify-content:center}
-    .digit-column-inner{display:flex;flex-direction:column;transform:translateY(calc(-1 * var(--start, 0) * 100%));animation:digit-scroll 1.8s cubic-bezier(0.37,0,0.63,1) forwards;animation-play-state:paused;will-change:transform}
+    .digit-column{position:relative;width:.75em;height:1em;overflow:hidden;display:inline-flex;justify-content:center}
+    .digit-column-inner{display:flex;flex-direction:column;will-change:transform;transform:translate3d(0,0,0);transition:transform 1.8s cubic-bezier(0.37,0,0.63,1)}
     .digit-column-inner span{display:block;height:1em;line-height:1em;font-family:var(--font-secondary)}
     .impact-number-static{display:inline-flex;align-items:center;font-family:var(--font-secondary)}
     .impact-number-suffix,.impact-number-prefix{font-size:.6em;letter-spacing:.08em;text-transform:uppercase;align-self:center;padding-top:0}
-    .impact-numbers-active .digit-column-inner{animation-play-state:running}
     .impact-card p{margin:0;color:#e5e7eb}
     .impact-card .icon-square{background:rgba(22,21,21,0.75)}
     .impact-card .icon-square::after{border-color:rgba(220,23,62,0.4)}
@@ -867,6 +865,7 @@
         return;
       }
       const digitSequence = ['0','1','2','3','4','5','6','7','8','9','0'];
+      let globalDigitIndex = 0;
       numberEls.forEach(function(numberEl){
         const baseValue = numberEl.dataset.number || numberEl.textContent.trim();
         const suffix = numberEl.dataset.suffix || '';
@@ -888,8 +887,13 @@
             inner.className = 'digit-column-inner';
             const startIndex = digitValue === 0 ? 9 : 0;
             const endIndex = digitValue === 0 ? 10 : digitValue;
-            inner.style.setProperty('--start', startIndex);
-            inner.style.setProperty('--end', endIndex);
+            const startOffset = -startIndex * 100;
+            inner.dataset.startIndex = String(startIndex);
+            inner.dataset.endIndex = String(endIndex);
+            const columnDelay = globalDigitIndex * 0.08;
+            inner.dataset.delay = columnDelay.toFixed(2);
+            inner.style.transitionDelay = `${columnDelay}s`;
+            inner.style.transform = `translate3d(0, ${startOffset}%, 0)`;
             digitSequence.forEach(function(digit){
               const digitSpan = document.createElement('span');
               digitSpan.textContent = digit;
@@ -897,6 +901,7 @@
             });
             column.appendChild(inner);
             digitsWrapper.appendChild(column);
+            globalDigitIndex++;
           } else {
             const staticSpan = document.createElement('span');
             staticSpan.className = 'impact-number-static';
@@ -931,6 +936,32 @@
         entries.forEach(function(entry){
           if(entry.isIntersecting){
             entry.target.classList.add('impact-numbers-active');
+            const columnInners = entry.target.querySelectorAll('.digit-column-inner');
+            columnInners.forEach(function(inner){
+              if(inner.dataset.animated === 'true'){
+                return;
+              }
+              const endIndex = Number(inner.dataset.endIndex || 0);
+              if(Number.isNaN(endIndex)){
+                return;
+              }
+              const delay = inner.dataset.delay || '0';
+              inner.style.transitionDelay = `${delay}s`;
+              const finalOffset = -endIndex * 100;
+              // force reflow to ensure transition plays from the start value
+              void inner.offsetHeight;
+              requestAnimationFrame(function(){
+                inner.style.transform = `translate3d(0, ${finalOffset}%, 0)`;
+              });
+              inner.addEventListener('transitionend', function handleTransitionEnd(event){
+                if(event.propertyName === 'transform'){
+                  inner.style.transitionDelay = '0s';
+                  inner.style.transform = `translate3d(0, ${finalOffset}%, 0)`;
+                  inner.dataset.animated = 'true';
+                  inner.removeEventListener('transitionend', handleTransitionEnd);
+                }
+              });
+            });
             observer.unobserve(entry.target);
           }
         });
