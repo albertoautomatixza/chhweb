@@ -200,6 +200,16 @@
     .consultation-card .form-actions .btn{background:#fff;color:#dc173e}
     .consultation-card .form-actions .btn:hover{opacity:1;filter:none;box-shadow:0 10px 26px rgba(0,0,0,0.28)}
     .consultation-card #formFeedback{font-weight:600;color:#fff}
+    .whatsapp-float{position:fixed;right:24px;bottom:24px;width:62px;height:62px;border-radius:50%;background:var(--brand-red);
+      display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px rgba(220,23,62,0.45);z-index:1200;
+      transition:transform .25s ease,box-shadow .25s ease}
+    .whatsapp-float:hover{transform:translateY(-4px);box-shadow:0 22px 46px rgba(220,23,62,0.55)}
+    .whatsapp-float:focus-visible{outline:3px solid rgba(255,255,255,0.65);outline-offset:4px}
+    .whatsapp-float svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    @media (max-width:599px){
+      .whatsapp-float{right:16px;bottom:16px;width:56px;height:56px}
+      .whatsapp-float svg{width:26px;height:26px}
+    }
     @media (max-width:767px){
       .map-card iframe{min-height:360px}
     }
@@ -812,6 +822,16 @@
       <p class="footer-bottom delay-4" data-animate>© <span id="year"></span> CHH Penalistas. Todos los derechos reservados.</p>
     </div>
   </footer>
+
+  <a class="whatsapp-float" href="https://wa.me/524495489025" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20.5 3.5A11 11 0 0 0 3.6 17.2L2.5 21.5l4.4-1.1A11 11 0 0 0 20.5 3.5z" />
+      <path d="M8.5 9.4c.2 3 2.7 5.3 5.7 5.5" />
+      <path d="M9.6 8.2L8.3 6.9" />
+      <path d="M14.4 15.1l1.4 1.4" />
+      <path d="M13.8 11.7c-.4.7-.9 1-.9 1s-1.1-.2-1.7-.7-.9-1.5-.9-1.5.3-.5 1-1" />
+    </svg>
+  </a>
 
   <script>
     function toggleMenu(force){
