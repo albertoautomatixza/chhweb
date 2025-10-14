@@ -890,10 +890,20 @@
       if(!track || !prevBtn || !nextBtn){
         return;
       }
+      const originalSlides = Array.from(track.querySelectorAll('.metric-card'));
+      if(originalSlides.length <= 1){
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        return;
+      }
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       const TRANSITION_VALUE = 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+      const totalSlides = originalSlides.length;
       let cardWidth = 0;
       let gap = 0;
+      let stepSize = 0;
+      let cardsPerView = 1;
+      let currentIndex = 0;
       let isTransitioning = false;
       let isManuallyPaused = false;
       let autoPlayId = null;
@@ -902,8 +912,37 @@
         const style = window.getComputedStyle(track);
         const gapValue = parseFloat(style.columnGap || style.gap || '0');
         gap = Number.isNaN(gapValue) ? 0 : gapValue;
-        const firstSlide = track.querySelector('.metric-card');
-        cardWidth = firstSlide ? firstSlide.getBoundingClientRect().width : 0;
+        const referenceSlide = track.querySelector('.metric-card:not(.metric-card-clone)');
+        cardWidth = referenceSlide ? referenceSlide.getBoundingClientRect().width : 0;
+        stepSize = cardWidth > 0 ? cardWidth + gap : 0;
+      }
+
+      function getCardsPerView(){
+        const computed = window.getComputedStyle(carousel).getPropertyValue('--cards-per-view');
+        const parsed = parseFloat(computed);
+        if(Number.isNaN(parsed) || parsed <= 0){
+          return 1;
+        }
+        return Math.min(totalSlides, Math.round(parsed));
+      }
+
+      function jumpToIndex(index, immediate){
+        if(stepSize <= 0){
+          computeMeasurements();
+        }
+        if(stepSize <= 0){
+          return;
+        }
+        const translateValue = -index * stepSize;
+        if(immediate){
+          track.style.transition = 'none';
+          track.style.transform = `translateX(${translateValue}px)`;
+          void track.offsetWidth;
+          track.style.transition = TRANSITION_VALUE;
+        } else {
+          track.style.transition = TRANSITION_VALUE;
+          track.style.transform = `translateX(${translateValue}px)`;
+        }
       }
 
       function stopAuto(){
@@ -914,79 +953,117 @@
       }
 
       function startAuto(){
-        if(isManuallyPaused || prefersReducedMotion.matches || autoPlayId || track.children.length <= 1){
+        if(isManuallyPaused || prefersReducedMotion.matches || autoPlayId){
           return;
         }
-        computeMeasurements();
-        if(cardWidth <= 0){
+        if(stepSize <= 0){
+          computeMeasurements();
+        }
+        if(stepSize <= 0 || totalSlides <= cardsPerView){
           return;
         }
         autoPlayId = window.setInterval(function(){
-          if(isTransitioning){
-            return;
+          if(!isTransitioning){
+            goToNext();
           }
-          goToNext();
         }, 5200);
       }
 
-      function finalizeTransition(){
-        track.style.transition = 'none';
-        track.style.transform = 'translateX(0)';
-        requestAnimationFrame(function(){
-          track.style.transition = TRANSITION_VALUE;
-          isTransitioning = false;
+      function rebuildCarousel(){
+        const wasPaused = isManuallyPaused;
+        stopAuto();
+        cardsPerView = getCardsPerView();
+        const disableControls = totalSlides <= cardsPerView;
+        prevBtn.disabled = disableControls;
+        nextBtn.disabled = disableControls;
+        track.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        const clonesToRender = Math.min(cardsPerView, totalSlides);
+
+        for(let i = clonesToRender; i > 0; i--){
+          const sourceIndex = (totalSlides - i) % totalSlides;
+          const clone = originalSlides[sourceIndex].cloneNode(true);
+          clone.classList.add('metric-card-clone');
+          clone.setAttribute('aria-hidden', 'true');
+          clone.removeAttribute('role');
+          clone.removeAttribute('data-animate');
+          clone.setAttribute('tabindex', '-1');
+          fragment.appendChild(clone);
+        }
+
+        originalSlides.forEach(function(slide){
+          slide.classList.remove('metric-card-clone');
+          slide.removeAttribute('aria-hidden');
+          slide.removeAttribute('tabindex');
+          fragment.appendChild(slide);
         });
+
+        for(let i = 0; i < clonesToRender; i++){
+          const clone = originalSlides[i % totalSlides].cloneNode(true);
+          clone.classList.add('metric-card-clone');
+          clone.setAttribute('aria-hidden', 'true');
+          clone.removeAttribute('role');
+          clone.removeAttribute('data-animate');
+          clone.setAttribute('tabindex', '-1');
+          fragment.appendChild(clone);
+        }
+
+        track.appendChild(fragment);
+        computeMeasurements();
+        isTransitioning = false;
+        currentIndex = cardsPerView;
+        jumpToIndex(currentIndex, true);
+        if(!wasPaused && !prefersReducedMotion.matches){
+          startAuto();
+        }
       }
 
       function goToNext(){
-        if(isTransitioning || track.children.length <= 1){
+        if(isTransitioning){
           return;
         }
-        computeMeasurements();
-        if(cardWidth <= 0){
+        if(stepSize <= 0){
+          computeMeasurements();
+        }
+        if(stepSize <= 0){
           return;
         }
         isTransitioning = true;
-        const moveAmount = cardWidth + gap;
-        track.style.transition = TRANSITION_VALUE;
-        track.style.transform = `translateX(-${moveAmount}px)`;
-        const handleTransitionEnd = function(event){
-          if(event.propertyName !== 'transform'){
-            return;
-          }
-          track.removeEventListener('transitionend', handleTransitionEnd);
-          track.appendChild(track.firstElementChild);
-          finalizeTransition();
-        };
-        track.addEventListener('transitionend', handleTransitionEnd);
+        currentIndex += 1;
+        jumpToIndex(currentIndex, false);
       }
 
       function goToPrev(){
-        if(isTransitioning || track.children.length <= 1){
+        if(isTransitioning){
           return;
         }
-        computeMeasurements();
-        if(cardWidth <= 0){
+        if(stepSize <= 0){
+          computeMeasurements();
+        }
+        if(stepSize <= 0){
           return;
         }
         isTransitioning = true;
-        const moveAmount = cardWidth + gap;
-        track.style.transition = 'none';
-        track.insertBefore(track.lastElementChild, track.firstElementChild);
-        track.style.transform = `translateX(-${moveAmount}px)`;
-        requestAnimationFrame(function(){
-          track.style.transition = TRANSITION_VALUE;
-          track.style.transform = 'translateX(0)';
-        });
-        const handleTransitionEnd = function(event){
-          if(event.propertyName !== 'transform'){
-            return;
-          }
-          track.removeEventListener('transitionend', handleTransitionEnd);
-          finalizeTransition();
-        };
-        track.addEventListener('transitionend', handleTransitionEnd);
+        currentIndex -= 1;
+        jumpToIndex(currentIndex, false);
       }
+
+      function handleTransitionEnd(event){
+        if(event.target !== track || event.propertyName !== 'transform'){
+          return;
+        }
+        const maxIndex = totalSlides + cardsPerView;
+        if(currentIndex >= maxIndex){
+          currentIndex = cardsPerView;
+          jumpToIndex(currentIndex, true);
+        } else if(currentIndex < cardsPerView){
+          currentIndex = totalSlides + currentIndex;
+          jumpToIndex(currentIndex, true);
+        }
+        isTransitioning = false;
+      }
+
+      track.addEventListener('transitionend', handleTransitionEnd);
 
       prevBtn.addEventListener('click', function(){
         if(isTransitioning){
@@ -1008,7 +1085,7 @@
 
       if(typeof ResizeObserver === 'function'){
         const resizeObserver = new ResizeObserver(function(){
-          computeMeasurements();
+          rebuildCarousel();
         });
         resizeObserver.observe(carousel);
       }
@@ -1017,7 +1094,7 @@
         prefersReducedMotion.addEventListener('change', function(event){
           if(event.matches){
             stopAuto();
-          } else {
+          } else if(!isManuallyPaused){
             startAuto();
           }
         });
@@ -1025,22 +1102,16 @@
         prefersReducedMotion.addListener(function(event){
           if(event.matches){
             stopAuto();
-          } else {
+          } else if(!isManuallyPaused){
             startAuto();
           }
         });
       }
 
-      computeMeasurements();
-      requestAnimationFrame(function(){
-        startAuto();
-        if(!autoPlayId){
-          window.setTimeout(startAuto, 800);
-        }
-      });
+      rebuildCarousel();
 
       metricsCarouselApi = {
-        recompute: computeMeasurements,
+        recompute: rebuildCarousel,
         pause: function(){
           isManuallyPaused = true;
           stopAuto();
