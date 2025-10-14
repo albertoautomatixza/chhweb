@@ -168,8 +168,8 @@
     .testimonial strong{display:block;margin-top:4px;color:var(--brand-red)}
     .contact{background:linear-gradient(145deg,#f4f5f7 0%,#ffffff 48%,#f4f5f7 100%)}
     .contact-grid{display:grid;gap:32px;align-items:stretch}
-    @media (min-width:992px){
-      .contact-grid{grid-template-columns:minmax(320px,380px) 1fr}
+    @media (min-width:768px){
+      .contact-grid{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
     }
     form label{display:block;font-weight:600;margin:0 0 6px;font-family:var(--font-secondary)}
     input, select, textarea{width:100%;padding:12px 14px;border:2px solid #d1d5db;outline:none;transition:.2s;font-size:16px;background:#fff;border-radius:14px;font-family:var(--font-secondary)}
@@ -178,7 +178,6 @@
     form .form-row{display:grid;gap:20px}
     @media (min-width:768px){form .form-row{grid-template-columns:repeat(2,1fr)}}
     form .form-actions{text-align:right}
-    .contact-sidebar{display:flex;flex-direction:column;gap:24px;height:100%}
     .contact-card{background:#fff;padding:32px 32px 28px;border-radius:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:18px;position:relative}
     .contact-card h3{margin-top:0}
     .contact-info{display:grid;gap:18px;margin-top:12px}
@@ -187,7 +186,7 @@
     .contact-info-item p{margin:0;color:var(--muted)}
     .contact-info a{color:var(--brand-gray);font-weight:600;font-family:var(--font-secondary)}
     .contact-info strong{font-family:var(--font-secondary)}
-    .map-card{background:#fff;border-radius:28px;box-shadow:var(--shadow);overflow:hidden;position:relative;flex:1;min-height:100%}
+    .map-card{background:#fff;border-radius:28px;box-shadow:var(--shadow);overflow:hidden;position:relative;height:100%;min-height:100%}
     .map-card iframe{width:100%;border:0;display:block;min-height:520px;height:100%;position:relative}
     .consultation{background:#050505;color:#fff;position:relative;overflow:hidden}
     .consultation::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(220,23,62,0.35),rgba(5,5,5,0.3) 55%,rgba(5,5,5,0.95) 100%);pointer-events:none}
@@ -676,42 +675,40 @@
         <div class="section-rule delay-1" aria-hidden="true" data-animate></div>
         <p class="section-lead delay-2" data-animate>Comparta su caso o inquietud. Un integrante del despacho responderá con franqueza y atención personalizada en un plazo máximo de 24 horas hábiles.</p>
         <div class="contact-grid">
-          <div class="contact-sidebar">
-            <aside class="contact-card delay-2" data-animate>
-              <h3>Datos de contacto directo</h3>
-              <div class="contact-info">
-                <div class="contact-info-item" data-animate>
-                  <div>
-                    <strong>Celulares</strong>
-                    <div style="display:grid;gap:6px">
-                      <a href="tel:+524495489025">449.548.9025</a>
-                      <a href="tel:+524491293402">449.129.3402</a>
-                    </div>
-                  </div>
-                </div>
-                <div class="contact-info-item delay-1" data-animate>
-                  <div>
-                    <strong>Correo</strong>
-                    <a href="mailto:contacto@chhpenalistas.com">contacto@chhpenalistas.com</a>
-                  </div>
-                </div>
-                <div class="contact-info-item delay-2" data-animate>
-                  <div>
-                    <strong>Ubicación</strong>
-                    <p>Hernando Martell #404, Jardines de la Asunción, Aguascalientes, México</p>
-                  </div>
-                </div>
-                <div class="contact-info-item delay-3" data-animate>
-                  <div>
-                    <strong>Horario de atención</strong>
-                    <p>Lunes a Viernes: 9:00 - 19:00<br />Sábados: 10:00 - 14:00</p>
+          <aside class="contact-card delay-2" data-animate>
+            <h3>Datos de contacto directo</h3>
+            <div class="contact-info">
+              <div class="contact-info-item" data-animate>
+                <div>
+                  <strong>Celulares</strong>
+                  <div style="display:grid;gap:6px">
+                    <a href="tel:+524495489025">449.548.9025</a>
+                    <a href="tel:+524491293402">449.129.3402</a>
                   </div>
                 </div>
               </div>
-            </aside>
-            <div class="map-card delay-3" data-animate>
-              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3732.023031502582!2d-102.30100772472994!3d21.87288625925613!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8429ee30f35fff9f%3A0x403e84aa76779b57!2sHernando%20Martell%20404%2C%20Jardines%20de%20la%20Asunci%C3%B3n%2C%2020220%20Aguascalientes%2C%20Ags.%2C%20Mexico!5e0!3m2!1ses!2smx!4v1700000000000!5m2!1ses!2smx" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa de la ubicación de CHH Penalistas en Aguascalientes"></iframe>
+              <div class="contact-info-item delay-1" data-animate>
+                <div>
+                  <strong>Correo</strong>
+                  <a href="mailto:contacto@chhpenalistas.com">contacto@chhpenalistas.com</a>
+                </div>
+              </div>
+              <div class="contact-info-item delay-2" data-animate>
+                <div>
+                  <strong>Ubicación</strong>
+                  <p>Hernando Martell #404, Jardines de la Asunción, Aguascalientes, México</p>
+                </div>
+              </div>
+              <div class="contact-info-item delay-3" data-animate>
+                <div>
+                  <strong>Horario de atención</strong>
+                  <p>Lunes a Viernes: 9:00 - 19:00<br />Sábados: 10:00 - 14:00</p>
+                </div>
+              </div>
             </div>
+          </aside>
+          <div class="map-card delay-3" data-animate>
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3732.023031502582!2d-102.30100772472994!3d21.87288625925613!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8429ee30f35fff9f%3A0x403e84aa76779b57!2sHernando%20Martell%20404%2C%20Jardines%20de%20la%20Asunci%C3%B3n%2C%2020220%20Aguascalientes%2C%20Ags.%2C%20Mexico!5e0!3m2!1ses!2smx!4v1700000000000!5m2!1ses!2smx" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa de la ubicación de CHH Penalistas en Aguascalientes"></iframe>
           </div>
         </div>
       </div>
